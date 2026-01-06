@@ -45,7 +45,9 @@ def rk4_step(x, inp, const_vals, dt):
 ###########
 # gym env
 ###########
-
+I = 90e-5
+A = 5.0/I
+w = 3.0
 class fish_env(gym.Env):
 
     def __init__(self,const_vals,dt = 0.01,max_steps = 1000):
@@ -57,6 +59,7 @@ class fish_env(gym.Env):
         self.state_dim = 7
         self.obs_dim = 2   # [u, qh]
         self.action_dim = 1  # only ddphi
+        self.prev_action = 0.0
 
         # ---- Spaces ----
         self.observation_space = spaces.Box(
@@ -80,26 +83,28 @@ class fish_env(gym.Env):
         super().reset(seed=seed)
 
         self.step_count = 0
-
+        self.prev_action = 0.0
         self.x = np.zeros(7, dtype=np.float32)
-        self.x += 0.01 * np.random.randn(7).astype(np.float32)
+        # self.x += 0.001 * np.random.randn(7).astype(np.float32)
 
         return self._get_obs(), {}
 
     # --------------------------------------------------
     def step(self, action):
         self.step_count += 1
-
-        action = float(np.clip(action[0], -1.0, 1.0))
-
+        prev_action = self.prev_action
+        # action = float(np.clip(action[0], -A, A))
+        action  = action[0]*A
+        self.prev_action = action
         # ---- build full input vector ----
         inp = np.array([0.0, 0.0, 0.0, action], dtype=np.float32)
 
         # ---- RK4 integration ----
         self.x = rk4_step(self.x, inp, self.const_vals, self.dt).astype(np.float32)
 
+
         obs = self._get_obs()
-        reward = self._reward(self.x, action)
+        reward = self._reward(self.x, action,prev_action)
         terminated = self._terminated(self.x)
         truncated = (self.step_count >= self.max_steps)
 
@@ -110,23 +115,32 @@ class fish_env(gym.Env):
         # obs = [u, qh]
         return np.array([self.x[3], self.x[2]], dtype=np.float32)
     # --------------------------------------------------
-    def _reward(self, x, action):
+    def _reward(self, x, action , prev_action):
         u = x[3]
         qh = x[2]
         qdh = x[6]
+        xd = u*np.cos(qh)
+        yd = u*np.sin(qh)
+        if u < 0.0:
+            r_u = 0.0
+        elif u < 0.3:
+            r_u =u #1 - abs(xd - 1.2)/2.4
+        elif u <= 1.5:
+            r_u = 1.0
+        # else:
+        #     r_u = 0.0  # or clamp, your choice
 
+        reward = r_u  #- yd**2 - 0.1*((1/A)*(action - prev_action))**2
+
+        reward*=1
         # example: stabilize upright & slow spin
-        return float(
-             u**2
-            - 0.1 * qh**2
-            - 0.001 * action**2
-        )
+        return reward
 
     # --------------------------------------------------
     def _terminated(self, x):
         if not np.isfinite(x).all():
             return True
-        if abs(x[2]) > 5.0:
+        if abs(x[2]) > 1.0:
             return True
         return False
 

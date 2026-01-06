@@ -34,53 +34,55 @@ def rk4_step(x, inp, const_vals, dt):
     k4 = f(x + dt * k3, inp, const_vals)
 
     return x + (dt/6.0) * (k1 + 2*k2 + 2*k3 + k4)
+I = 90e-5
+A = 5.0/I
+w = 2.0
+def input_law(t):
+    return np.array([0.0, 0.0, 0.0, A *np.cos(w*t)])
+
+def rhs(t, x, const_vals):
+    inp = input_law(t)
+    return f(x, inp, const_vals)
+import time
+
+# Constants
+const_vals = get_constants()
+x0 = np.zeros(7)
+# Time span
+t0, tf = 0.0, 10.0
+t_eval = np.linspace(t0, tf, 1000)
+ts = time.time()
+sol = solve_ivp(
+    rhs,
+    (t0, tf),
+    x0,
+    method="RK45",
+    t_eval=t_eval,
+    args=(const_vals,)
+
+)
+te  = time.time()
+
+print("time taken ",te-ts)
+import matplotlib.pyplot as plt
+t = sol.t              # shape (N,)
+x = sol.y.T            # shape (N, 7)
+
+q1  = x[:, 0]
+q2  = x[:, 1]
+qh  = x[:, 2]
+u   = x[:, 3]
+qd1 = x[:, 4]
+qd2 = x[:, 5]
+qdh = x[:, 6]
+
+plt.plot(u,qdh)
+
 # I = 90e-5
-# A = 5.0/I
+# A = 12.0/I
 # w = 3.0
-# def input_law(t):
-#     return np.array([0.0, 0.0, 0.0, A *np.sin(w*t)])
-
-# def rhs(t, x, const_vals):
-#     inp = input_law(t)
-#     return f(x, inp, const_vals)
-# import time
-
-# # Constants
-# const_vals = get_constants()
-# x0 = np.zeros(7)
-# # Time span
-# t0, tf = 0.0, 20.0
-# t_eval = np.linspace(t0, tf, 1000)
-# ts = time.time()
-# sol = solve_ivp(
-#     rhs,
-#     (t0, tf),
-#     x0,
-#     method="RK45",
-#     t_eval=t_eval,
-#     args=(const_vals,)
-
-# )
-# te  = time.time()
-
-# print("time taken ",te-ts)
-# import matplotlib.pyplot as plt
-# t = sol.t              # shape (N,)
-# x = sol.y.T            # shape (N, 7)
-
-# q1  = x[:, 0]
-# q2  = x[:, 1]
-# qh  = x[:, 2]
-# u   = x[:, 3]
-# qd1 = x[:, 4]
-# qd2 = x[:, 5]
-# qdh = x[:, 6]
-
-# plt.plot(u,qdh)
-# # I = 90e-5
-# # A = 12.0/I
-# # w = 3.0
-# plt.show()
-# plt.plot(t,u)
-# plt.show()
-
+plt.show()
+plt.plot(t,u*np.cos(qh))
+plt.show()
+plt.plot(t,qh)
+plt.show()

@@ -121,16 +121,18 @@ class fish_env(gym.Env):
         qdh = x[6]
         xd = u*np.cos(qh)
         yd = u*np.sin(qh)
-        if u < 0.0:
+        if xd < 0.0:
             r_u = 0.0
-        elif u < 0.3:
-            r_u =u #1 - abs(xd - 1.2)/2.4
-        elif u <= 1.5:
+        elif xd < 0.3:
+            r_u =xd
+        elif xd <= 1.5:
             r_u = 1.0
         # else:
         #     r_u = 0.0  # or clamp, your choice
 
-        reward = r_u  #- yd**2 - 0.1*((1/A)*(action - prev_action))**2
+        # reward = r_u - 2*yd**2
+        reward = r_u - 2*qh**2 
+        # reward = r_u  - ((1/A)*(action - prev_action))**2 - yd**2
 
         reward*=1
         # example: stabilize upright & slow spin
@@ -140,7 +142,7 @@ class fish_env(gym.Env):
     def _terminated(self, x):
         if not np.isfinite(x).all():
             return True
-        if abs(x[2]) > 1.0:
+        if abs(x[2]) > 3:
             return True
         return False
 

@@ -21,7 +21,7 @@ obs_dim = env.observation_space.shape[0]
 act_dim = env.action_space.shape[0]
 buffer = Replay_Buffer(obs_dim, act_dim, 1000000)
 
-key = jax.random.PRNGKey(0)
+key = jax.random.PRNGKey(42)
 sac = SAC(obs_dim, act_dim, key)
 
 # Split State for JIT
@@ -193,8 +193,3 @@ print(f"  Avg last 10 episodes: {np.mean(returns_log[-10:]):.2f}" if len(returns
 
 writer.close()
 env.close()
-
-print("\n" + "="*50)
-print("To evaluate the trained policy, run:")
-print("  python -c 'from jax_save_load import run_saved_policy; run_saved_policy(\"saved_models/best_policy\")'")
-print("="*50)

@@ -35,10 +35,10 @@ def rk4_step(x, inp, const_vals, dt):
 
     return x + (dt/6.0) * (k1 + 2*k2 + 2*k3 + k4)
 I = 90e-5
-A = 5.0/I
+A = 4000
 w = 2.0
 def input_law(t):
-    return np.array([0.0, 0.0, 0.0, A *np.cos(w*t)])
+    return np.array([0.0, 0.0, 0.0, -A])
 
 def rhs(t, x, const_vals):
     inp = input_law(t)
@@ -49,7 +49,7 @@ import time
 const_vals = get_constants()
 x0 = np.zeros(7)
 # Time span
-t0, tf = 0.0, 10.0
+t0, tf = 0.0, 40.0
 t_eval = np.linspace(t0, tf, 1000)
 ts = time.time()
 sol = solve_ivp(
@@ -82,7 +82,7 @@ plt.plot(u,qdh)
 # A = 12.0/I
 # w = 3.0
 plt.show()
-plt.plot(t,u*np.cos(qh))
+plt.plot(t,u)
 plt.show()
 plt.plot(t,qh)
 plt.show()
